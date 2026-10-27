@@ -5,8 +5,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#172b4d">
-  <title>単位変換ツール</title>
+  <title>単位変換・検算ツール</title>
   <link rel="manifest" href="./manifest.json">
+
   <style>
     * { box-sizing: border-box; }
 
@@ -18,11 +19,7 @@
       font-family: "Segoe UI", "Meiryo", sans-serif;
     }
 
-    main {
-      max-width: 480px;
-      margin: 0 auto;
-    }
-
+    main { max-width: 480px; margin: 0 auto; }
     h1 { font-size: 25px; margin-bottom: 6px; }
     .subtitle { color: #667085; font-size: 14px; }
 
@@ -58,6 +55,7 @@
     }
 
     .result-label { font-size: 13px; color: #475467; }
+
     #output {
       font-size: 28px;
       font-weight: 700;
@@ -65,6 +63,27 @@
       margin-top: 8px;
     }
 
+    .detail {
+      margin-top: 16px;
+      padding: 14px;
+      border: 1px solid #e4e7ec;
+      border-radius: 10px;
+      overflow-wrap: anywhere;
+    }
+
+    .detail h2 { font-size: 16px; margin: 0 0 12px; }
+    .detail p { font-size: 14px; line-height: 1.7; margin: 8px 0; }
+    .formula {
+      background: #f8fafc;
+      padding: 10px;
+      border-radius: 6px;
+      font-family: Consolas, monospace;
+      font-size: 14px;
+      line-height: 1.7;
+      overflow-wrap: anywhere;
+    }
+
+    .status { font-weight: 700; }
     button {
       width: 100%;
       margin-top: 14px;
@@ -85,112 +104,186 @@
     }
   </style>
 </head>
+
 <body>
-  <main>
-    <h1>単位変換ツール</h1>
-    <div class="subtitle">Unit Converter · v0.1</div>
+<main>
+  <h1>単位変換・検算ツール</h1>
+  <div class="subtitle">Unit Converter · v0.2</div>
 
-    <section class="panel">
-      <label for="category">変換する単位</label>
-      <select id="category">
-        <option value="mass">質量：kg ⇔ lb</option>
-        <option value="length">長さ：m ⇔ ft</option>
-        <option value="smallLength">長さ：cm ⇔ inch</option>
-      </select>
+  <section class="panel">
+    <label for="category">変換する単位</label>
+    <select id="category">
+      <option value="mass">質量：kg ⇔ lb</option>
+      <option value="length">長さ：m ⇔ ft</option>
+      <option value="smallLength">長さ：cm ⇔ inch</option>
+    </select>
 
-      <label for="direction">変換方向</label>
-      <select id="direction">
-        <option value="forward">左の単位 → 右の単位</option>
-        <option value="reverse">右の単位 → 左の単位</option>
-      </select>
+    <label for="direction">変換方向</label>
+    <select id="direction">
+      <option value="forward">左の単位 → 右の単位</option>
+      <option value="reverse">右の単位 → 左の単位</option>
+    </select>
 
-      <label id="inputLabel" for="amount">入力値（kg）</label>
-      <input id="amount" type="number" inputmode="decimal"
-             step="any" placeholder="数値を入力">
+    <label id="inputLabel" for="amount">入力値（kg）</label>
+    <input id="amount" type="number" inputmode="decimal"
+           step="any" placeholder="数値を入力">
 
-      <div class="result" aria-live="polite">
-        <div class="result-label">換算結果</div>
-        <div id="output">ここに結果が表示されます</div>
+    <div class="result" aria-live="polite">
+      <div class="result-label">換算結果</div>
+      <div id="output">数値を入力してください</div>
+    </div>
+
+    <div class="detail">
+      <h2>① 使用する換算係数</h2>
+      <p id="factorInfo">数値を入力してください</p>
+    </div>
+
+    <div class="detail">
+      <h2>② 計算過程</h2>
+      <div id="calculation" class="formula">
+        入力すると計算式が表示されます
       </div>
+    </div>
 
-      <button id="clear" type="button">入力をクリア</button>
-    </section>
+    <div class="detail">
+      <h2>③ 逆変換による検算</h2>
+      <p id="checkFormula">計算結果を元の単位に戻して確認します。</p>
+      <p id="checkResult" class="status">未実施</p>
+    </div>
 
-    <footer>
-      換算結果は表示桁数に応じて丸めています。
-      参考用ツールです。重要な判断には使用せず、
-      必要に応じて別の方法でも確認してください。
-    </footer>
-  </main>
+    <button id="clear" type="button">入力をクリア</button>
+  </section>
 
-  <script>
-    const definitions = {
-      mass: {
-        left: "kg",
-        right: "lb",
-        factor: 2.2046226218
-      },
-      length: {
-        left: "m",
-        right: "ft",
-        factor: 3.280839895
-      },
-      smallLength: {
-        left: "cm",
-        right: "inch",
-        factor: 1 / 2.54
-      }
-    };
+  <footer>
+    換算係数はアプリ内に設定された値を使用します。
+    表示桁数は最大10桁です。検算は同じ換算係数による
+    逆変換であり、係数や計算方法自体の正しさを保証するものではありません。
+    重要な用途では、信頼できる資料や独立した計算方法でも確認してください。
+  </footer>
+</main>
 
-    const category = document.getElementById("category");
-    const direction = document.getElementById("direction");
-    const amount = document.getElementById("amount");
-    const inputLabel = document.getElementById("inputLabel");
-    const output = document.getElementById("output");
+<script>
+  const definitions = {
+    mass: {
+      left: "kg",
+      right: "lb",
+      factor: 2.2046226218,
+      factorText: "1 kg ≈ 2.2046226218 lb"
+    },
+    length: {
+      left: "m",
+      right: "ft",
+      factor: 3.280839895,
+      factorText: "1 m ≈ 3.280839895 ft"
+    },
+    smallLength: {
+      left: "cm",
+      right: "inch",
+      factor: 1 / 2.54,
+      factorText: "1 cm = 1 ÷ 2.54 inch"
+    }
+  };
 
-    function update() {
-      const unit = definitions[category.value];
-      const reverse = direction.value === "reverse";
-      const from = reverse ? unit.right : unit.left;
-      const to = reverse ? unit.left : unit.right;
+  const category = document.getElementById("category");
+  const direction = document.getElementById("direction");
+  const amount = document.getElementById("amount");
+  const inputLabel = document.getElementById("inputLabel");
+  const output = document.getElementById("output");
+  const factorInfo = document.getElementById("factorInfo");
+  const calculation = document.getElementById("calculation");
+  const checkFormula = document.getElementById("checkFormula");
+  const checkResult = document.getElementById("checkResult");
 
-      inputLabel.textContent = `入力値（${from}）`;
+  function formatNumber(value) {
+    return value.toLocaleString("en-US", {
+      maximumFractionDigits: 10,
+      useGrouping: false
+    });
+  }
 
-      if (amount.value.trim() === "") {
-        output.textContent = "ここに結果が表示されます";
-        return;
-      }
+  function clearDetails(message) {
+    output.textContent = message;
+    factorInfo.textContent = "数値を入力してください";
+    calculation.textContent = "入力すると計算式が表示されます";
+    checkFormula.textContent = "計算結果を元の単位に戻して確認します。";
+    checkResult.textContent = "未実施";
+  }
 
-      const value = Number(amount.value);
+  function update() {
+    const unit = definitions[category.value];
+    const reverse = direction.value === "reverse";
+    const from = reverse ? unit.right : unit.left;
+    const to = reverse ? unit.left : unit.right;
 
-      if (!Number.isFinite(value)) {
-        output.textContent = "有効な数値を入力してください";
-        return;
-      }
+    inputLabel.textContent = `入力値（${from}）`;
 
-      const result = reverse
-        ? value / unit.factor
-        : value * unit.factor;
-
-      output.textContent =
-        `${result.toLocaleString("en-US", {
-          maximumFractionDigits: 6
-        })} ${to}`;
+    if (amount.value.trim() === "") {
+      clearDetails("数値を入力してください");
+      return;
     }
 
-    category.addEventListener("change", update);
-    direction.addEventListener("change", update);
-    amount.addEventListener("input", update);
+    const value = Number(amount.value);
 
-    document.getElementById("clear").addEventListener("click", () => {
-      amount.value = "";
-      update();
-      amount.focus();
-    });
+    if (!Number.isFinite(value)) {
+      clearDetails("有効な数値を入力してください");
+      return;
+    }
 
+    const factor = unit.factor;
+    const result = reverse ? value / factor : value * factor;
+
+    if (!Number.isFinite(result)) {
+      clearDetails("計算できる範囲を超えています");
+      return;
+    }
+
+    output.textContent = `${formatNumber(result)} ${to}`;
+
+    factorInfo.textContent =
+      `${unit.factorText}（左から右への換算係数）`;
+
+    const operator = reverse ? "÷" : "×";
+    const formulaFactor = reverse
+      ? formatNumber(factor)
+      : formatNumber(factor);
+
+    calculation.textContent =
+      `${formatNumber(value)} ${from}\n` +
+      `${operator} ${formulaFactor}\n` +
+      `= ${formatNumber(result)} ${to}`;
+
+    // 変換結果を反対方向に戻して、入力値と照合する
+    const restored = reverse ? result * factor : result / factor;
+    const error = Math.abs(restored - value);
+    const tolerance = Math.max(1, Math.abs(value)) * 1e-10;
+    const passed = error <= tolerance;
+
+    checkFormula.textContent =
+      `${formatNumber(result)} ${to} ` +
+      `${reverse ? "×" : "÷"} ${formatNumber(factor)} ` +
+      `= ${formatNumber(restored)} ${from}`;
+
+    checkResult.textContent = passed
+      ? `一致（差：${formatNumber(error)} ${from}）`
+      : `差を確認してください（差：${formatNumber(error)} ${from}）`;
+
+    checkResult.style.color = passed ? "#067647" : "#b42318";
+  }
+
+  category.addEventListener("change", update);
+  direction.addEventListener("change", update);
+  amount.addEventListener("input", update);
+
+  document.getElementById("clear").addEventListener("click", () => {
+    amount.value = "";
     update();
-  </script>
-  <script>
+    amount.focus();
+  });
+
+  update();
+</script>
+
+<script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
       navigator.serviceWorker.register("./sw.js")

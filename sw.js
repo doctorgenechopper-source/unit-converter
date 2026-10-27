@@ -1,4 +1,4 @@
-const CACHE_NAME = "unit-converter-v1";
+const CACHE_NAME = "unit-converter-v2";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
