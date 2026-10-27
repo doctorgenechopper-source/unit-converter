@@ -1,0 +1,204 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#172b4d">
+  <title>単位変換ツール</title>
+  <link rel="manifest" href="./manifest.json">
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 24px 16px;
+      background: #f3f5f8;
+      color: #1d2939;
+      font-family: "Segoe UI", "Meiryo", sans-serif;
+    }
+
+    main {
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    h1 { font-size: 25px; margin-bottom: 6px; }
+    .subtitle { color: #667085; font-size: 14px; }
+
+    .panel {
+      background: white;
+      padding: 20px;
+      margin-top: 20px;
+      border-radius: 14px;
+      box-shadow: 0 3px 12px #1522380d;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin: 16px 0 8px;
+    }
+
+    select, input {
+      width: 100%;
+      padding: 13px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: white;
+      font-size: 16px;
+    }
+
+    .result {
+      background: #edf4ff;
+      border-radius: 10px;
+      margin-top: 20px;
+      padding: 18px;
+    }
+
+    .result-label { font-size: 13px; color: #475467; }
+    #output {
+      font-size: 28px;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+      margin-top: 8px;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 14px;
+      padding: 12px;
+      border: 0;
+      border-radius: 8px;
+      background: #172b4d;
+      color: white;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    footer {
+      color: #667085;
+      font-size: 12px;
+      line-height: 1.6;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>単位変換ツール</h1>
+    <div class="subtitle">Unit Converter · v0.1</div>
+
+    <section class="panel">
+      <label for="category">変換する単位</label>
+      <select id="category">
+        <option value="mass">質量：kg ⇔ lb</option>
+        <option value="length">長さ：m ⇔ ft</option>
+        <option value="smallLength">長さ：cm ⇔ inch</option>
+      </select>
+
+      <label for="direction">変換方向</label>
+      <select id="direction">
+        <option value="forward">左の単位 → 右の単位</option>
+        <option value="reverse">右の単位 → 左の単位</option>
+      </select>
+
+      <label id="inputLabel" for="amount">入力値（kg）</label>
+      <input id="amount" type="number" inputmode="decimal"
+             step="any" placeholder="数値を入力">
+
+      <div class="result" aria-live="polite">
+        <div class="result-label">換算結果</div>
+        <div id="output">ここに結果が表示されます</div>
+      </div>
+
+      <button id="clear" type="button">入力をクリア</button>
+    </section>
+
+    <footer>
+      換算結果は表示桁数に応じて丸めています。
+      参考用ツールです。重要な判断には使用せず、
+      必要に応じて別の方法でも確認してください。
+    </footer>
+  </main>
+
+  <script>
+    const definitions = {
+      mass: {
+        left: "kg",
+        right: "lb",
+        factor: 2.2046226218
+      },
+      length: {
+        left: "m",
+        right: "ft",
+        factor: 3.280839895
+      },
+      smallLength: {
+        left: "cm",
+        right: "inch",
+        factor: 1 / 2.54
+      }
+    };
+
+    const category = document.getElementById("category");
+    const direction = document.getElementById("direction");
+    const amount = document.getElementById("amount");
+    const inputLabel = document.getElementById("inputLabel");
+    const output = document.getElementById("output");
+
+    function update() {
+      const unit = definitions[category.value];
+      const reverse = direction.value === "reverse";
+      const from = reverse ? unit.right : unit.left;
+      const to = reverse ? unit.left : unit.right;
+
+      inputLabel.textContent = `入力値（${from}）`;
+
+      if (amount.value.trim() === "") {
+        output.textContent = "ここに結果が表示されます";
+        return;
+      }
+
+      const value = Number(amount.value);
+
+      if (!Number.isFinite(value)) {
+        output.textContent = "有効な数値を入力してください";
+        return;
+      }
+
+      const result = reverse
+        ? value / unit.factor
+        : value * unit.factor;
+
+      output.textContent =
+        `${result.toLocaleString("en-US", {
+          maximumFractionDigits: 6
+        })} ${to}`;
+    }
+
+    category.addEventListener("change", update);
+    direction.addEventListener("change", update);
+    amount.addEventListener("input", update);
+
+    document.getElementById("clear").addEventListener("click", () => {
+      amount.value = "";
+      update();
+      amount.focus();
+    });
+
+    update();
+  </script>
+  <script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js")
+        .catch(error => {
+          console.error("Service Workerの登録に失敗:", error);
+        });
+    });
+  }
+</script>
+</body>
+</html>

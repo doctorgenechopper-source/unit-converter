@@ -1,0 +1,11 @@
+
+{
+  "name": "単位変換ツール",
+  "short_name": "単位変換",
+  "description": "各種単位を変換するツール",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3f5f8",
+  "theme_color": "#172b4d"
+}
